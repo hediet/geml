@@ -5,7 +5,7 @@ geml-lang.org
 ## Example
 
 ```
-{!inmal 0.9}
+{!geml 0.9}
 {Obj
     <Hello World {bold <Blub {nested}>}>
     param: value
@@ -57,7 +57,7 @@ AnyText   ::= .*
 
 Trivias  ::= (WS | Comment)+
 
-RecognizedAsInmalDocument ::= '{!inmal' AnyText
+RecognizedAsInmalDocument ::= '{!geml' AnyText
 Document ::= Header (Trivias? StructuredValue)* Trivias?
 
 Header ::= '{!inmal 0.1' (Trivias HeaderAttr)* Trivias? '}'

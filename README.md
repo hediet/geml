@@ -58,7 +58,7 @@ AnyText   ::= .*
 Trivias  ::= (WS | Comment)+
 
 RecognizedAsGemlDocument ::= '{!geml' AnyText
-Document ::= Header (Trivias? StructuredValue)* Trivias?
+Document ::= Header (Trivias? Structured)* Trivias?
 
 Header ::= '{!geml 0.1' (Trivias HeaderAttr)* Trivias? '}'
 
@@ -66,7 +66,8 @@ HeaderAttr ::= PropertyName ':' Trivias? PropertyValue
 PropertyName  ::= Identifier
 PropertyValue ::= Value
 
-Value ::= Primitive | String | StructuredValue
+Value ::= Primitive | String | Structured
+Structured ::= Object | Array
 
 Primitive      ::= PrimitiveChar+
 PrimitiveChar  ::= IdentifierContChar | [+*=|~!?,;/\"'()^&@%$#]
@@ -76,7 +77,7 @@ String ::= SinglelineString | MultilineString | HeredocString
 SinglelineString     ::= '"' (SinglelineStringChar | EscapeSequence)* '"'
 SinglelineStringChar ::= . \ ('\' | '"' | LineBreak)
 
-MultilineString     ::= '<' (MultilineStringChar | EscapeSequence | StructuredValue)* '>'
+MultilineString     ::= '<' (MultilineStringChar | EscapeSequence | Object)* '>'
 MultilineStringChar ::= . \ ('\' | '<' | '>' | '{' | '}' | LineBreak)
 
 EscapeSequence     ::=  '\' (EscapedCR | EscapedLF | EscapedTab | EscapedSpecialChar | CodePointRef | IgnoredWS)
@@ -88,13 +89,16 @@ CodePointRef       ::= 'u' Hex Hex Hex Hex
 Hex                ::= [0-9A-F]
 IgnoredWS          ::= LineBreak SingleLineWSChar*
 
-HeredocString ::= '<' Delimiter '<' (AnyText | '\' Delimiter EscapeSequence | '\' Delimiter '\:' StructuredValue)* '>' Delimiter '>'
+HeredocString ::= '<' Delimiter '<' (AnyText | '\' Delimiter EscapeSequence | '\' Delimiter '\:' Object)* '>' Delimiter '>'
 
-StructuredValue  ::= '{' StructuredValueKind? (Trivias Property)* Trivias? '}'
-StructuredValueKind ::= Identifier
+
+Object  ::= '{' ObjectKind? (Trivias Property)* Trivias? '}'
+ObjectKind ::= Identifier
 
 Property           ::= PositionalProperty | NamedProperty
 PositionalProperty ::= PropertyValue
 NamedProperty      ::= PropertyName ':' Trivias? PropertyValue
+
+Array ::= '[' (Trivias Value)* Trivias ']'
 
 ```

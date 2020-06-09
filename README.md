@@ -57,10 +57,10 @@ AnyText   ::= .*
 
 Trivias  ::= (WS | Comment)+
 
-RecognizedAsInmalDocument ::= '{!geml' AnyText
+RecognizedAsGemlDocument ::= '{!geml' AnyText
 Document ::= Header (Trivias? StructuredValue)* Trivias?
 
-Header ::= '{!inmal 0.1' (Trivias HeaderAttr)* Trivias? '}'
+Header ::= '{!geml 0.1' (Trivias HeaderAttr)* Trivias? '}'
 
 HeaderAttr ::= PropertyName ':' Trivias? PropertyValue
 PropertyName  ::= Identifier

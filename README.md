@@ -102,3 +102,16 @@ NamedProperty      ::= PropertyName ':' Trivias? PropertyValue
 Array ::= '[' (Trivias Value)* Trivias ']'
 
 ```
+
+## Planned Tooling
+
+-   TypeScript based parser lib. Will produce rich AST with printing/formatting/... capabilities.
+-   VS Code Syntax Highlighting + Syntax Validation
+-   Online Editor support
+-   Eventually, JSON Schema / `@hediet/semantic-json` support
+
+## Target
+
+-   Alternative to ICU message format
+-   Alternative to xml
+-   Alternative to json/json5/yaml/toml

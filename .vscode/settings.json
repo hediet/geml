@@ -1,0 +1,12 @@
+{
+	"typescript.tsdk": ".vscode/pnpify/typescript/lib",
+	"typescript.enablePromptUseWorkspaceTsdk": true,
+	"eslint.nodePath": ".vscode/pnpify",
+	"prettier.prettierPath": ".vscode/pnpify/prettier/index.js",
+	"editor.formatOnSave": true,
+	"editor.defaultFormatter": "esbenp.prettier-vscode",
+	"mochaExplorer.files": ["dist\\test\\**\\*.test.js"],
+	"mochaExplorer.require": ["./test/setup", "source-map-support/register"],
+	"mochaExplorer.logpanel": true,
+	"npm.packageManager": "yarn"
+}

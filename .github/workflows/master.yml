@@ -1,0 +1,24 @@
+name: Trigger Prerelease
+on:
+    push:
+        branches:
+            - master
+
+jobs:
+    build:
+        runs-on: ubuntu-latest
+        steps:
+            - name: Checkout
+              uses: actions/checkout@v2
+              with:
+                  submodules: true
+            - name: Install Node.js
+              uses: actions/setup-node@v1
+              with:
+                  node-version: 10.x
+                  registry-url: "https://registry.npmjs.org"
+            - run: yarn install --immutable
+            - run: yarn run-script set-version-from-changelog
+            - run: yarn run-script trigger-prerelease
+              env:
+                  GH_TOKEN: ${{ secrets.GH_TOKEN }}

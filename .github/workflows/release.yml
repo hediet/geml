@@ -1,0 +1,28 @@
+name: Release
+on:
+    push:
+        branches:
+            - "releases/**"
+
+jobs:
+    build:
+        runs-on: ubuntu-latest
+        steps:
+            - name: Checkout
+              uses: actions/checkout@v2
+              with:
+                  submodules: true
+            - name: Install Node.js
+              uses: actions/setup-node@v1
+              with:
+                  node-version: 10.x
+                  registry-url: "https://registry.npmjs.org"
+            - run: yarn install --immutable
+            - run: yarn lint
+            - run: yarn run-script set-version-from-changelog
+            - run: yarn build
+            - run: yarn test
+            - run: yarn run-script pub
+              env:
+                  NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+                  GH_TOKEN: ${{ secrets.GH_TOKEN }}

@@ -1,6 +1,14 @@
 # GeML: Generic Markup Language
 
-geml-lang.org
+[![](https://img.shields.io/twitter/follow/hediet_dev.svg?style=social)](https://twitter.com/intent/follow?screen_name=hediet_dev)
+
+# Install
+
+To install the library:
+
+```
+yarn add @hediet/geml
+```
 
 ## Example
 
@@ -14,14 +22,20 @@ geml-lang.org
         flag: true
         baz: "2"
         "te\"st": blub
+        <key>: <baz>
     }
+
+    arr: [
+        item1
+        "item2"
+    ]
 
     {-test-
     Comment
     -test-}
 
     blaa: <test<
-        \test\{test}
+        \test\:{test}
     >test>
     foo: <
         baz {blub}
@@ -62,9 +76,9 @@ Document ::= Header (Trivias? Structured)* Trivias?
 
 Header ::= '{!geml 0.1' (Trivias HeaderAttr)* Trivias? '}'
 
-HeaderAttr ::= PropertyName ':' Trivias? PropertyValue
-PropertyName  ::= Identifier
-PropertyValue ::= Value
+HeaderAttr ::= HeaderAttrPropertyName ':' Trivias? HeaderAttrPropertyValue
+HeaderAttrPropertyName  ::= Identifier
+HeaderAttrPropertyValue ::= Value
 
 Value ::= Primitive | String | Structured
 Structured ::= Object | Array
@@ -97,7 +111,10 @@ ObjectKind ::= Identifier
 
 Property           ::= PositionalProperty | NamedProperty
 PositionalProperty ::= PropertyValue
+PropertyValue      ::= Value
+
 NamedProperty      ::= PropertyName ':' Trivias? PropertyValue
+PropertyName       ::= Identifier | String
 
 Array ::= '[' (Trivias Value)* Trivias ']'
 

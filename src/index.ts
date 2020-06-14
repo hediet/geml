@@ -1,2 +1,2 @@
-export { parseGemlMarkupString } from "./utils";
+export { parseGemlMarkupString } from "./helpers";
 export * from "./ast";

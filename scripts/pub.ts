@@ -8,7 +8,7 @@ export async function run(): Promise<void> {
 	if (version.toLowerCase() === "unreleased") {
 		return;
 	}
-	
+
 	const semVer = SemanticVersion.parse(version);
 	let releaseTag: string | undefined = undefined;
 	if (semVer.prerelease) {
@@ -21,7 +21,7 @@ export async function run(): Promise<void> {
 
 	const gitTag = `v${version}`;
 	console.log(`Creating a version tag "${gitTag}".`);
-	const api = new GitHub(process.env.GH_TOKEN!);
+	const api = new GitHub(process.env.GITHUB_TOKEN!);
 	await api.git.createRef({
 		...context.repo,
 		ref: `refs/tags/${gitTag}`,

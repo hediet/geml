@@ -154,12 +154,21 @@ export class GemlPrimitive extends GemlValueBase {
 	}
 }
 
-export abstract class GemlString extends GemlValueBase {
-	simpleValue: string | undefined;
+export type GemlString =
+	| GemlSinglelineString
+	| GemlMarkupStringDocument
+	| GemlMarkupString;
+
+export abstract class GemlStringBase extends GemlValueBase {
+	abstract get simpleValue(): string | undefined;
 }
 
-export class GemlSinglelineString extends GemlString {
+export class GemlSinglelineString extends GemlStringBase {
 	public readonly kind = "singlelineString";
+
+	get simpleValue(): string {
+		return this.items.nodes.map((n) => n.text).join();
+	}
 
 	public constructor(
 		public startToken: GemlToken<TokenKind.SinglelineString>,
@@ -183,13 +192,10 @@ export class GemlSinglelineString extends GemlString {
 export class GemlMarkupStringDocument extends GemlNodeBase {
 	public readonly kind = "markupStringDocument";
 
-	private content: GemlNodeList<GemlObject | GemlMarkupStringPart>;
-
 	public constructor(
-		content: GemlNodeList<GemlObject | GemlMarkupStringPart>
+		public content: GemlNodeList<GemlObject | GemlMarkupStringPart>
 	) {
 		super();
-		this.content = content;
 	}
 
 	public getChildren(): ReadonlyArray<GemlNodeBase> {
@@ -197,8 +203,12 @@ export class GemlMarkupStringDocument extends GemlNodeBase {
 	}
 }
 
-export class GemlMarkupString extends GemlString {
+export class GemlMarkupString extends GemlStringBase {
 	public readonly kind = "markupString";
+
+	get simpleValue(): string | undefined {
+		return undefined; // TODO
+	}
 
 	constructor(
 		public startToken: GemlToken<TokenKind.AngleBracketOpened>,
@@ -242,8 +252,12 @@ export class GemlMarkupStringPart extends GemlNodeBase {
 	}
 }
 
-export class GemlHeredocString extends GemlString {
+export class GemlHeredocString extends GemlStringBase {
 	public readonly kind = "heredocStringPart";
+
+	get simpleValue(): string {
+		return ""; // TODO
+	}
 
 	constructor(
 		public startToken: GemlToken<TokenKind.HeredocStringStart>,
@@ -304,14 +318,32 @@ export class GemlObject extends GemlValueBase {
 	public getChildren(): ReadonlyArray<GemlNodeBase> {
 		return [this.properties];
 	}
+
+	public getNamedProperties(): GemlNamedProperty[] {
+		return this.properties.nodes.filter(
+			(p) => p.kind === "namedProperty"
+		) as GemlNamedProperty[];
+	}
+
+	public getPositionalProperties(): GemlPositionalProperty[] {
+		return this.properties.nodes.filter(
+			(p) => p.kind === "positionalProperty"
+		) as GemlPositionalProperty[];
+	}
 }
 
 export class GemlNamedProperty extends GemlNodeBase {
 	public readonly kind = "namedProperty";
 
+	public get nameText(): string {
+		return this.name.kind === "token"
+			? this.name.text
+			: this.name.simpleValue!;
+	}
+
 	constructor(
-		public name: GemlToken<TokenKind.Primitive> | GemlString,
-		public value: GemlValueBase
+		public name: GemlToken<TokenKind.Primitive> | GemlSinglelineString,
+		public value: GemlValue
 	) {
 		super();
 	}
@@ -324,7 +356,7 @@ export class GemlNamedProperty extends GemlNodeBase {
 export class GemlPositionalProperty extends GemlNodeBase {
 	public readonly kind = "positionalProperty";
 
-	constructor(public value: GemlValueBase) {
+	constructor(public value: GemlValue) {
 		super();
 	}
 

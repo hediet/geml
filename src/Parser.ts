@@ -4,7 +4,6 @@ import {
 	TokenKind,
 	GemlObject,
 	GemlArray,
-	GemlValueBase,
 	GemlMarkupString,
 	GemlHeredocString,
 	GemlSinglelineString,
@@ -14,6 +13,7 @@ import {
 	GemlNodeList,
 	GemlNamedProperty,
 	GemlPositionalProperty,
+	GemlValue,
 } from "./ast";
 import { Tokenizer } from "./tokenizer";
 
@@ -56,7 +56,7 @@ export class Parser {
 		return new GemlMarkupStringDocument(new GemlNodeList(items));
 	}
 
-	parseValue(tokenizer: Tokenizer): GemlValueBase {
+	parseValue(tokenizer: Tokenizer): GemlValue {
 		const pos = tokenizer.pos;
 		tokenizer.tryReadLeadingTrivias();
 		const kind = tokenizer.peekKind();

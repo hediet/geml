@@ -23,7 +23,7 @@ export async function run(): Promise<void> {
 		);
 	}
 
-	const api = new GitHub(process.env.GH_TOKEN!);
+	const api = new GitHub(process.env.GITHUB_TOKEN!);
 	const prereleaseBranch = `pending-releases/v${semVer.toString()}`;
 	const prereleaseRef = `refs/heads/${prereleaseBranch}`;
 	try {

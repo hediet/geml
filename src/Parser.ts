@@ -32,7 +32,7 @@ export class Parser {
 			const peeked = tokenizer.peekKind();
 			if (peeked === TokenKind.CurlyBracketOpened) {
 				tokenizer.setState({ kind: "default" });
-				items.push(this.parseObject(tokenizer));
+				items.push(this.parseObject(tokenizer, false));
 				tokenizer.setState({ kind: "inMarkupString" });
 			} else if (peeked === TokenKind.Text) {
 				const token = tokenizer.expect(TokenKind.Text)!;
@@ -83,7 +83,7 @@ export class Parser {
 			const peeked = tokenizer.peekKind();
 			if (peeked === TokenKind.CurlyBracketOpened) {
 				tokenizer.setState({ kind: "default" });
-				items.push(this.parseObject(tokenizer));
+				items.push(this.parseObject(tokenizer, false));
 				tokenizer.setState({ kind: "inMarkupString" });
 			} else if (peeked === TokenKind.Text) {
 				const token = tokenizer.expect(TokenKind.Text)!;
@@ -126,7 +126,7 @@ export class Parser {
 		throw new Error("Not implemented");
 	}
 
-	parseObject(tokenizer: Tokenizer): GemlObject {
+	parseObject(tokenizer: Tokenizer, readTrailingTrivias = true): GemlObject {
 		tokenizer.tryReadLeadingTrivias();
 		const startToken = tokenizer.expect(TokenKind.CurlyBracketOpened)!;
 		const exclamationToken = tokenizer.tryRead(TokenKind.ExclamationMark);
@@ -189,7 +189,9 @@ export class Parser {
 		}
 
 		const endToken = tokenizer.expect(TokenKind.CurlyBracketClosed);
-		tokenizer.tryReadTrailingTrivias();
+		if (readTrailingTrivias) {
+			tokenizer.tryReadTrailingTrivias();
+		}
 
 		return new GemlObject(
 			new GemlToken(startToken.kind, startToken.text),

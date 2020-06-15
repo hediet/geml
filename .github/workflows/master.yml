@@ -21,4 +21,4 @@ jobs:
             - run: yarn run-script set-version-from-changelog
             - run: yarn run-script trigger-prerelease
               env:
-                  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+                  GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}

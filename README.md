@@ -10,7 +10,39 @@ To install the library:
 yarn add @hediet/geml
 ```
 
-## Example
+## Example Geml Documents
+
+### A contact book
+
+```
+{ContactBook {-- "ContactBook" is the type of the object --}
+    contacts: [
+        {-- The next object does not have a type --}
+        { firstName: <Max> lastName: <Mustermann> }
+    ]
+}
+```
+
+### Text with markup
+
+```
+<
+    Hello {Bold <World>}!
+    You can {Bold <even {Italic <nest>} markup!>}
+>
+```
+
+### As I18n Formatting Language
+
+```
+You have {count} unread {plural {count} one:<E-Mail> other:<E-Mails>}!
+```
+
+```
+Click {link <here>} to read them!
+```
+
+### Demonstration of all language features
 
 ```
 {!geml 0.9}
@@ -48,12 +80,6 @@ yarn add @hediet/geml
 }
 ```
 
-## Name Finding
-
-tyml: typed markup language (typed)
-geml: Generic Markup Language (geml.org is taken. geml-lang.org?)
-inmal: inline markup language
-
 ## Grammar
 
 ```
@@ -72,7 +98,7 @@ AnyText   ::= .*
 Trivias  ::= (WS | Comment)+
 
 RecognizedAsGemlDocument ::= '{!geml' AnyText
-Document ::= Header (Trivias? Structured)* Trivias?
+Document ::= Header? (Trivias? Value)* Trivias?
 
 Header ::= '{!geml 0.1' (Trivias HeaderAttr)* Trivias? '}'
 

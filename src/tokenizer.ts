@@ -159,10 +159,12 @@ export class Tokenizer {
 						kind: TokenKind.AngleBracketClosed,
 						text: curChar,
 					};
+				case "\\":
+					return this.readEscapeSeq();
 				default:
 					while (
 						this.source[this.pos] !== undefined &&
-						"{}<>".indexOf(this.source[this.pos]) === -1
+						"{}<>\\".indexOf(this.source[this.pos]) === -1
 					) {
 						curChar += this.source[this.pos];
 						this.pos++;
@@ -174,6 +176,16 @@ export class Tokenizer {
 		// identifier
 		// primitive
 		// text
+	}
+
+	private readEscapeSeq(): Token<TokenKind.EscapeSequence> {
+		const nextChar = this.source[this.pos];
+		if (nextChar === undefined) {
+			return { kind: TokenKind.EscapeSequence, text: "\\" };
+		}
+		this.pos++;
+
+		return { kind: TokenKind.EscapeSequence, text: "\\" + nextChar };
 	}
 
 	public peek(): Token<TokenKind> | undefined {
@@ -194,10 +206,11 @@ export class Tokenizer {
 		return undefined;
 	}
 }
-interface Token<T extends TokenKind> {
+export interface Token<T extends TokenKind> {
 	kind: T;
 	text: string;
 }
+
 type TokenizerState =
 	| {
 			kind: "default";

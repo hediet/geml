@@ -14,13 +14,14 @@ import {
 	GemlNamedProperty,
 	GemlPositionalProperty,
 	GemlValue,
+	GemlPrimitive,
 } from "./ast";
-import { Tokenizer } from "./tokenizer";
+import { Tokenizer, Token } from "./tokenizer";
 
 export class Parser {
 	parseDocument(tokenizer: Tokenizer): GemlDocument {
-		this.parseObject(tokenizer);
-		throw new Error("Not implemented");
+		const obj = this.parseValue(tokenizer);
+		return new GemlDocument(new GemlNodeList([obj]));
 	}
 
 	parseMarkupStringContent(tokenizer: Tokenizer): GemlMarkupStringDocument {
@@ -38,12 +39,7 @@ export class Parser {
 				const token = tokenizer.expect(TokenKind.Text)!;
 				items.push(
 					new GemlMarkupStringPart(
-						new GemlNodeList([
-							new GemlToken<TokenKind.Text>(
-								token.kind,
-								token.text
-							),
-						])
+						new GemlNodeList([tokenToAstToken(token)])
 					)
 				);
 			} else if (peeked === undefined) {
@@ -66,9 +62,20 @@ export class Parser {
 			return this.parseMarkupString(tokenizer);
 		} else if (kind === TokenKind.CurlyBracketOpened) {
 			return this.parseObject(tokenizer);
+		} else if (kind === TokenKind.SquareBracketOpened) {
+			return this.parseArray(tokenizer);
+		} else if (kind === TokenKind.Primitive) {
+			return this.parsePrimitive(tokenizer);
 		}
 
 		throw new Error("Not supported");
+	}
+
+	parsePrimitive(tokenizer: Tokenizer): GemlPrimitive {
+		tokenizer.tryReadLeadingTrivias();
+		const token = tokenizer.expect(TokenKind.Primitive)!;
+		tokenizer.tryReadTrailingTrivias();
+		return new GemlPrimitive(tokenToAstToken(token));
 	}
 
 	parseMarkupString(tokenizer: Tokenizer): GemlMarkupString {
@@ -85,17 +92,26 @@ export class Parser {
 				tokenizer.setState({ kind: "default" });
 				items.push(this.parseObject(tokenizer, false));
 				tokenizer.setState({ kind: "inMarkupString" });
-			} else if (peeked === TokenKind.Text) {
-				const token = tokenizer.expect(TokenKind.Text)!;
+			} else if (
+				peeked === TokenKind.Text ||
+				peeked === TokenKind.EscapeSequence
+			) {
+				const partItems = Array<
+					GemlToken<TokenKind.EscapeSequence | TokenKind.Text>
+				>();
+				let p: TokenKind | undefined = peeked;
+				while (p === TokenKind.Text || p === TokenKind.EscapeSequence) {
+					const token = tokenToAstToken(
+						tokenizer.read() as
+							| Token<TokenKind.EscapeSequence>
+							| Token<TokenKind.Text>
+					);
+					partItems.push(token);
+					p = tokenizer.peekKind();
+				}
+
 				items.push(
-					new GemlMarkupStringPart(
-						new GemlNodeList([
-							new GemlToken<TokenKind.Text>(
-								token.kind,
-								token.text
-							),
-						])
-					)
+					new GemlMarkupStringPart(new GemlNodeList(partItems))
 				);
 			} else if (peeked === TokenKind.AngleBracketClosed) {
 				break;
@@ -112,9 +128,9 @@ export class Parser {
 		tokenizer.setState(oldState);
 
 		return new GemlMarkupString(
-			new GemlToken(start.kind, start.text),
+			tokenToAstToken(start),
 			new GemlNodeList(items),
-			endToken ? new GemlToken(endToken.kind, endToken.text) : undefined
+			tokenToAstToken(endToken)
 		);
 	}
 
@@ -160,14 +176,8 @@ export class Parser {
 				const colonToken = tokenizer.tryRead(TokenKind.Colon);
 				if (colonToken) {
 					propInfo = {
-						name: new GemlToken(
-							identifierToken.kind,
-							identifierToken.text
-						),
-						colonToken: new GemlToken<TokenKind.Colon>(
-							colonToken.kind,
-							colonToken.text
-						),
+						name: tokenToAstToken(identifierToken),
+						colonToken: tokenToAstToken(colonToken),
 					};
 					tokenizer.tryReadTrailingTrivias();
 				}
@@ -194,19 +204,19 @@ export class Parser {
 		}
 
 		return new GemlObject(
-			new GemlToken(startToken.kind, startToken.text),
-			identifierToken
-				? new GemlToken(identifierToken.kind, identifierToken.text)
-				: undefined,
+			tokenToAstToken(startToken),
+			tokenToAstToken(identifierToken),
 			new GemlNodeList(props),
-			endToken ? new GemlToken(endToken.kind, endToken.text) : undefined
+			tokenToAstToken(endToken)
 		);
 	}
 
 	parseArray(tokenizer: Tokenizer): GemlArray {
 		tokenizer.tryReadLeadingTrivias();
-		tokenizer.expect(TokenKind.SquareBracketOpened);
+		const startToken = tokenizer.expect(TokenKind.SquareBracketOpened)!;
 		tokenizer.tryReadTrailingTrivias();
+
+		const items = new Array<GemlValue>();
 
 		// eslint-disable-next-line no-constant-condition
 		while (true) {
@@ -217,14 +227,33 @@ export class Parser {
 			if (kind === undefined) {
 				break;
 			} else if (kind === TokenKind.SquareBracketClosed) {
-				tokenizer.expect(TokenKind.SquareBracketClosed);
-				tokenizer.tryReadTrailingTrivias();
 				break;
 			}
 			tokenizer.goto(pos);
 
-			this.parseValue(tokenizer);
+			const value = this.parseValue(tokenizer);
+			items.push(value);
 		}
-		throw new Error("Not implemented");
+		const endToken = tokenizer.expect(TokenKind.SquareBracketClosed);
+		tokenizer.tryReadTrailingTrivias();
+
+		return new GemlArray(
+			tokenToAstToken(startToken),
+			new GemlNodeList(items),
+			tokenToAstToken(endToken)
+		);
 	}
+}
+
+function tokenToAstToken<T extends TokenKind>(token: Token<T>): GemlToken<T>;
+function tokenToAstToken<T extends TokenKind>(
+	token: Token<T> | undefined
+): GemlToken<T> | undefined;
+function tokenToAstToken<T extends TokenKind>(
+	token: Token<T> | undefined
+): GemlToken<T> | undefined {
+	if (!token) {
+		return undefined;
+	}
+	return new GemlToken(token.kind, token.text);
 }

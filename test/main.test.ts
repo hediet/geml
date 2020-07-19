@@ -13,6 +13,13 @@ describe("Parser", () => {
 			});
 		});
 
+		it("supports string with escape sequences", () => {
+			deepEqual(toSimpleJson(parseGemlMarkupString("Str1\\> \\<Str2")), {
+				kind: "markupStringDocument",
+				content: ["Str1> <Str2"],
+			});
+		});
+
 		it("supports strings mixed with objects", () => {
 			deepEqual(toSimpleJson(parseGemlMarkupString("Str1 {Obj1} Str2")), {
 				content: [

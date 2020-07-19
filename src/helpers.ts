@@ -14,7 +14,7 @@ import { Tokenizer } from "./tokenizer";
 export function parseGemlMarkupString(text: string): GemlMarkupStringDocument {
 	const parser = new Parser();
 	const tokenizer = new Tokenizer(text);
-	const result = parser.parseMarkupStringContent(tokenizer);
+	const result = parser.parseMarkupStringDocument(tokenizer);
 	return result;
 }
 

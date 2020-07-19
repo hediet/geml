@@ -24,65 +24,18 @@ export class Parser {
 		return new GemlDocument(new GemlNodeList([obj]));
 	}
 
-	parseMarkupStringContent(tokenizer: Tokenizer): GemlMarkupStringDocument {
-		tokenizer.setState({ kind: "inMarkupString" });
-
-		const items = new Array<GemlObject | GemlMarkupStringPart>();
-
-		while (true) {
-			const peeked = tokenizer.peekKind();
-			if (peeked === TokenKind.CurlyBracketOpened) {
-				tokenizer.setState({ kind: "default" });
-				items.push(this.parseObject(tokenizer, false));
-				tokenizer.setState({ kind: "inMarkupString" });
-			} else if (peeked === TokenKind.Text) {
-				const token = tokenizer.expect(TokenKind.Text)!;
-				items.push(
-					new GemlMarkupStringPart(
-						new GemlNodeList([tokenToAstToken(token)])
-					)
-				);
-			} else if (peeked === undefined) {
-				break;
-			} else {
-				throw new Error("Cannot happen");
-			}
-		}
-
+	parseMarkupStringDocument(tokenizer: Tokenizer): GemlMarkupStringDocument {
+		const items = this.parseMarkupStringContent(
+			tokenizer,
+			"markupStringDocument"
+		);
 		return new GemlMarkupStringDocument(new GemlNodeList(items));
 	}
 
-	parseValue(tokenizer: Tokenizer): GemlValue {
-		const pos = tokenizer.pos;
-		tokenizer.tryReadLeadingTrivias();
-		const kind = tokenizer.peekKind();
-		tokenizer.goto(pos);
-
-		if (kind === TokenKind.AngleBracketOpened) {
-			return this.parseMarkupString(tokenizer);
-		} else if (kind === TokenKind.CurlyBracketOpened) {
-			return this.parseObject(tokenizer);
-		} else if (kind === TokenKind.SquareBracketOpened) {
-			return this.parseArray(tokenizer);
-		} else if (kind === TokenKind.Primitive) {
-			return this.parsePrimitive(tokenizer);
-		}
-
-		throw new Error("Not supported");
-	}
-
-	parsePrimitive(tokenizer: Tokenizer): GemlPrimitive {
-		tokenizer.tryReadLeadingTrivias();
-		const token = tokenizer.expect(TokenKind.Primitive)!;
-		tokenizer.tryReadTrailingTrivias();
-		return new GemlPrimitive(tokenToAstToken(token));
-	}
-
-	parseMarkupString(tokenizer: Tokenizer): GemlMarkupString {
-		tokenizer.tryReadLeadingTrivias();
-		const start = tokenizer.expect(TokenKind.AngleBracketOpened)!;
-
-		const oldState = tokenizer.state;
+	parseMarkupStringContent(
+		tokenizer: Tokenizer,
+		context: "markupStringValue" | "markupStringDocument"
+	): Array<GemlObject | GemlMarkupStringPart> {
 		tokenizer.setState({ kind: "inMarkupString" });
 		const items = new Array<GemlObject | GemlMarkupStringPart>();
 
@@ -114,13 +67,56 @@ export class Parser {
 					new GemlMarkupStringPart(new GemlNodeList(partItems))
 				);
 			} else if (peeked === TokenKind.AngleBracketClosed) {
-				break;
+				if (context === "markupStringDocument") {
+					throw new Error("Unexpected character found");
+				} else {
+					break;
+				}
 			} else if (peeked === undefined) {
 				break;
 			} else {
 				throw new Error("Cannot happen");
 			}
 		}
+
+		return items;
+	}
+
+	parseValue(tokenizer: Tokenizer): GemlValue {
+		const pos = tokenizer.pos;
+		tokenizer.tryReadLeadingTrivias();
+		const kind = tokenizer.peekKind();
+		tokenizer.goto(pos);
+
+		if (kind === TokenKind.AngleBracketOpened) {
+			return this.parseMarkupString(tokenizer);
+		} else if (kind === TokenKind.CurlyBracketOpened) {
+			return this.parseObject(tokenizer);
+		} else if (kind === TokenKind.SquareBracketOpened) {
+			return this.parseArray(tokenizer);
+		} else if (kind === TokenKind.Primitive) {
+			return this.parsePrimitive(tokenizer);
+		}
+
+		throw new Error("Not supported");
+	}
+
+	parsePrimitive(tokenizer: Tokenizer): GemlPrimitive {
+		tokenizer.tryReadLeadingTrivias();
+		const token = tokenizer.expect(TokenKind.Primitive)!;
+		tokenizer.tryReadTrailingTrivias();
+		return new GemlPrimitive(tokenToAstToken(token));
+	}
+
+	parseMarkupString(tokenizer: Tokenizer): GemlMarkupString {
+		tokenizer.tryReadLeadingTrivias();
+		const start = tokenizer.expect(TokenKind.AngleBracketOpened)!;
+		const oldState = tokenizer.state;
+
+		const items = this.parseMarkupStringContent(
+			tokenizer,
+			"markupStringValue"
+		);
 
 		const endToken = tokenizer.expect(TokenKind.AngleBracketClosed);
 		tokenizer.tryReadTrailingTrivias();
